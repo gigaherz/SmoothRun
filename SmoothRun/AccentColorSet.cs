@@ -31,7 +31,7 @@ namespace SmoothRun
 
                 return _allSets;
             }
-            private set => _allSets = value;
+            private set { _allSets = value; }
         }
 
         public static AccentColorSet ActiveSet

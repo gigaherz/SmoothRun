@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using SmoothRun.Annotations;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -8,10 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using Microsoft.Win32;
-using SmoothRun.Annotations;
 
 namespace SmoothRun
 {
@@ -33,7 +32,7 @@ namespace SmoothRun
 
         public AppStatus AppStatus
         {
-            get => _appStatus;
+            get { return _appStatus; }
             set
             {
                 if (value == _appStatus) return;
@@ -58,7 +57,7 @@ namespace SmoothRun
 
         public Brush PopupBackground
         {
-            get => _popupBackground;
+            get { return _popupBackground; }
             private set
             {
                 if (Equals(value, _popupBackground)) return;
@@ -69,7 +68,7 @@ namespace SmoothRun
 
         public Brush PopupBorder
         {
-            get => _popupBorder;
+            get { return _popupBorder; }
             set
             {
                 if (Equals(value, _popupBorder)) return;
@@ -80,7 +79,7 @@ namespace SmoothRun
 
         public Brush PopupPanel
         {
-            get => _popupPanel;
+            get { return _popupPanel; }
             set
             {
                 if (Equals(value, _popupPanel)) return;
@@ -314,7 +313,6 @@ namespace SmoothRun
     public class AppEntry : INotifyPropertyChanged
     {
         private LaunchPhase _phase;
-        private TimeSpan _launchTime;
 
         internal Process Process { get; set; }
 
@@ -350,7 +348,7 @@ namespace SmoothRun
 
         public LaunchPhase Phase
         {
-            get => _phase;
+            get { return _phase; }
             set
             {
                 if (value == _phase) return;

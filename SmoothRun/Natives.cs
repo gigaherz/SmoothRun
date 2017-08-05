@@ -14,7 +14,8 @@ namespace SmoothRun
                 return false;
 
             var procId = Process.GetCurrentProcess().Id;
-            GetWindowThreadProcessId(activatedHandle, out var activeProcId);
+            int activeProcId;
+            GetWindowThreadProcessId(activatedHandle, out activeProcId);
 
             return activeProcId == procId;
         }
