@@ -56,8 +56,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AccentColorSet.cs" />
+    <Compile Include="AppEntry.cs" />
+    <Compile Include="AppStatus.cs" />
     <Compile Include="ExtractIcon.cs" />
+    <Compile Include="LaunchPhase.cs" />
     <Compile Include="Natives.cs" />
+    <Compile Include="SmoothConfig.cs" />
     <Compile Include="Util\FileToIcon.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace SmoothRun.Util
 {
@@ -22,7 +17,7 @@ namespace SmoothRun.Util
         {
             using (Icon ico = Icon.FromHandle(ExtractFileIcon.ReadIcon(value as string ?? "")))
             {
-                return System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                return Imaging.CreateBitmapSourceFromHIcon(
                     ico.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             }
         }

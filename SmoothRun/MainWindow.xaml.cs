@@ -1,11 +1,9 @@
-﻿using Microsoft.Win32;
-using SmoothRun.Annotations;
+﻿using SmoothRun.Annotations;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,10 +17,12 @@ namespace SmoothRun
     /// </summary>
     public partial class MainWindow : INotifyPropertyChanged
     {
+        SmoothConfig mConfig = new SmoothConfig();
+
         public double ComputedMaxWidth => SystemParameters.WorkArea.Width * 0.8;
 
-        public DateTime StartupDate { get; set; } = DateTime.Now.AddSeconds(10);
-        public TimeSpan RemainingTime => StartupDate - DateTime.Now;
+        public int StartupTick { get; set; } = Environment.TickCount + 10 * 1000;
+        public int RemainingTicks => StartupTick - Environment.TickCount;
 
         private Brush _popupBackground;
         private Brush _popupBorder;
@@ -48,7 +48,7 @@ namespace SmoothRun
             {
                 switch(AppStatus)
                 {
-                    case AppStatus.Waiting: return $"The following applications will start launching in {RemainingTime:mm':'ss} seconds...";
+                    case AppStatus.Waiting: return $"The following applications will start launching in {TimeSpan.FromMilliseconds(RemainingTicks):mm':'ss} seconds...";
                     case AppStatus.Launching: return "Starting applications...";
                 }
                 return "";
@@ -113,6 +113,11 @@ namespace SmoothRun
 
                     var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
                     var smoothStartup = Path.Combine(startMenu, "Smooth Startup");
+                    var startMenuCommon = Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms);
+                    var smoothStartupCommon = Path.Combine(startMenuCommon, "Smooth Startup");
+
+                    mConfig.LoadFrom(new[] { Path.Combine(smoothStartup, ".smoothconfig"), Path.Combine(smoothStartupCommon, ".smoothconfig") });
+
                     if (Directory.Exists(smoothStartup))
                     {
                         foreach (var entry in Directory.EnumerateFiles(smoothStartup, "*.lnk"))
@@ -120,13 +125,12 @@ namespace SmoothRun
                             _appList.Add(new AppEntry
                             {
                                 Title = Path.GetFileNameWithoutExtension(entry),
-                                FullPath = entry
+                                FullPath = entry,
+                                Timeout = mConfig.Timeout
                             });
                         }
                     }
 
-                    var startMenuCommon = Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms);
-                    var smoothStartupCommon = Path.Combine(startMenuCommon, "Smooth Startup");
                     if (Directory.Exists(smoothStartupCommon))
                     {
                         foreach (var entry in Directory.EnumerateFiles(smoothStartupCommon, "*.lnk"))
@@ -134,7 +138,8 @@ namespace SmoothRun
                             _appList.Add(new AppEntry
                             {
                                 Title = Path.GetFileNameWithoutExtension(entry),
-                                FullPath = entry
+                                FullPath = entry,
+                                Timeout = mConfig.Timeout
                             });
                         }
                     }
@@ -148,12 +153,7 @@ namespace SmoothRun
         {
             InitializeComponent();
 
-            SystemEvents.UserPreferenceChanging += SystemEvents_UserPreferenceChanging;
-
             Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => {
-
-                UpdateAccentColor();
-
                 Natives.EnableBlur(this);
             }));
 
@@ -161,24 +161,6 @@ namespace SmoothRun
             timer.Interval = TimeSpan.FromMilliseconds(100);
             timer.Tick += Timer_Tick;
             timer.Start();
-        }
-
-        private void UpdateAccentColor()
-        {
-            File.WriteAllLines(@"F:\Accents.txt", AccentColorSet.ActiveSet.GetAllColorNames().Select(s => {
-                var c = AccentColorSet.ActiveSet[s];
-                return $"{s}: {c}";
-            }));
-            var c1 = AccentColorSet.ActiveSet["SystemAccent"];
-            var c2 = AccentColorSet.ActiveSet["SystemAccentDark2"];
-            c2.A = 192;
-            PopupBackground = new SolidColorBrush(c2);
-            PopupBorder = new SolidColorBrush(c1);
-        }
-
-        private void SystemEvents_UserPreferenceChanging(object sender, UserPreferenceChangingEventArgs e)
-        {
-            UpdateAccentColor();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -193,10 +175,10 @@ namespace SmoothRun
 
         private void Timer_Tick(object sender, EventArgs eventArgs)
         {
-            if (DateTime.Now < StartupDate)
+            if (RemainingTicks > 0 && mConfig.FirstIsSpecial)
             {
                 OnPropertyChanged(nameof(StatusText));
-                OnPropertyChanged(nameof(RemainingTime));
+                OnPropertyChanged(nameof(RemainingTicks));
                 return;
             }
 
@@ -260,13 +242,16 @@ namespace SmoothRun
 
         private void BeginAppCooldown(AppEntry app, bool first)
         {
-            app.WaitDate = first ? DateTime.Now : DateTime.Now.AddSeconds(5);
+            if (mConfig.FirstIsSpecial)
+                app.ExecuteTick = first ? Environment.TickCount : Environment.TickCount + (1000 * app.Timeout);
+            else
+                app.ExecuteTick = Environment.TickCount + (1000 * app.Timeout);
             app.Phase = LaunchPhase.Next;
         }
 
         private bool IsCooldownOver(AppEntry app)
         {
-            return DateTime.Now >= app.WaitDate;
+            return app.ExecuteTick != 0 && (Environment.TickCount - app.ExecuteTick) > 0;
         }
 
         private void StartLaunching(AppEntry app)
@@ -308,104 +293,5 @@ namespace SmoothRun
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-    }
-
-    public class AppEntry : INotifyPropertyChanged
-    {
-        private LaunchPhase _phase;
-
-        internal Process Process { get; set; }
-
-        public Visibility Visibility => Phase == LaunchPhase.Done ? Visibility.Collapsed : Visibility.Visible;
-        public string Title { get; set; }
-        public string FullPath { get; set; }
-
-        public DateTime WaitDate { get; set; }
-        public TimeSpan WaitTime => WaitDate - DateTime.Now;
-        public Visibility ProgressVisibility => Phase == LaunchPhase.Next ? Visibility.Visible : Visibility.Hidden;
-        public double ProgressAngle => 360 * WaitTime.TotalSeconds / 5.0;
-        public bool ProgressLarge => WaitTime.TotalSeconds > 2.5;
-        public Point ProgressPoint
-        {
-            get
-            {
-                var angleRad = (ProgressAngle - 90) * Math.PI / 180.0;
-
-                var endPoint = new Point(
-                    50 + 50 * Math.Cos(angleRad),
-                    50 + 50 * Math.Sin(angleRad));
-
-                if (Math.Abs(50 - Math.Round(endPoint.X)) < 1 && 
-                    Math.Abs(0 - Math.Round(endPoint.Y)) < 1)
-                    endPoint.X -= 0.01;
-
-                return endPoint;
-            }
-        }
-
-        public DateTime LaunchDate { get; set; }
-        public TimeSpan LaunchTime => DateTime.Now - LaunchDate;
-
-        public LaunchPhase Phase
-        {
-            get { return _phase; }
-            set
-            {
-                if (value == _phase) return;
-                _phase = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(PhaseTitle));
-                OnPropertyChanged(nameof(Visibility));
-            }
-        }
-
-        public string PhaseTitle
-        {
-            get
-            {
-                switch(Phase)
-                {
-                    case LaunchPhase.Waiting: return "Waiting...";
-                    case LaunchPhase.Next: return $"Starts in {WaitTime:mm':'ss}...";
-                    case LaunchPhase.Launching: return $"Launching... {LaunchTime:mm':'ss}";
-                }
-                return "";
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void Pulse()
-        {
-            OnPropertyChanged(nameof(WaitTime));
-            OnPropertyChanged(nameof(ProgressAngle));
-            OnPropertyChanged(nameof(ProgressLarge));
-            OnPropertyChanged(nameof(ProgressPoint));
-            OnPropertyChanged(nameof(ProgressVisibility));
-            OnPropertyChanged(nameof(LaunchTime));
-            OnPropertyChanged(nameof(PhaseTitle));
-        }
-    }
-
-    public enum LaunchPhase
-    {
-        Idle,
-        Waiting,
-        Next,
-        Launching,
-        Done,
-        Error
-    }
-
-    public enum AppStatus
-    {
-        Waiting,
-        Launching
     }
 }
