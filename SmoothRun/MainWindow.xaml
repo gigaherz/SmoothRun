@@ -25,6 +25,7 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Window.Resources>
         <util:FileToIconConverter x:Key="converter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -89,47 +90,57 @@
                                 </DataTrigger.ExitActions>
                             </DataTrigger>
                         </DataTemplate.Triggers>
-                        
-                        <Grid Margin="12" Width="128" Visibility="{Binding Visibility}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <Image Grid.Row="0" Name="Icon" HorizontalAlignment="Center" Width="128" Height="128" Stretch="Uniform"
-                                   Source="{Binding Path=FullPath, Converter={StaticResource converter}, ConverterParameter=128}">
-                            </Image>
-                            <Path Grid.Row="0" Stroke="White" Visibility="{Binding ProgressVisibility}"
-                                  StrokeThickness="1" Width="102" Height="102"
-                                  Fill="#7FFFFFFF"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Path.Data>
-                                    <PathGeometry>
-                                        <PathGeometry.Figures>
-                                            <PathFigureCollection>
-                                                <PathFigure>
-                                                    <PathFigure.Segments>
-                                                        <PathSegmentCollection>
-                                                            <LineSegment Point="50,50" IsStroked="False" />
-                                                            <LineSegment Point="50,0"></LineSegment>
-                                                            <ArcSegment Point="{Binding ProgressPoint}" Size="50,50" SweepDirection="Clockwise" 
-                                                                        RotationAngle="{Binding ProgressAngle}" IsLargeArc="{Binding ProgressLarge}" />
-                                                            <LineSegment Point="50,50"></LineSegment>
-                                                        </PathSegmentCollection>
-                                                    </PathFigure.Segments>
-                                                </PathFigure>
-                                            </PathFigureCollection>
-                                        </PathGeometry.Figures>
-                                    </PathGeometry>
-                                </Path.Data>
-                            </Path>
 
-                            <Label Grid.Row="1" HorizontalContentAlignment="Center" Content="{Binding PhaseTitle}" Margin="0,8,0,0"
-                                   Foreground="White" />
+                        <Grid Margin="12" Width="128" Visibility="{Binding Visibility}" Background="Transparent">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Image Grid.Row="0" Name="Icon" HorizontalAlignment="Center" Width="128" Height="128" Stretch="Uniform"
+                                       Source="{Binding Path=FullPath, Converter={StaticResource converter}, ConverterParameter=128}">
+                                </Image>
+                                <Path Grid.Row="0" Stroke="White" Visibility="{Binding ProgressVisibility}"
+                                      StrokeThickness="1" Width="102" Height="102"
+                                      Fill="#7FFFFFFF"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path.Data>
+                                        <PathGeometry>
+                                            <PathGeometry.Figures>
+                                                <PathFigureCollection>
+                                                    <PathFigure>
+                                                        <PathFigure.Segments>
+                                                            <PathSegmentCollection>
+                                                                <LineSegment Point="50,50" IsStroked="False" />
+                                                                <LineSegment Point="50,0"></LineSegment>
+                                                                <ArcSegment Point="{Binding ProgressPoint}" Size="50,50" SweepDirection="Clockwise" 
+                                                                            RotationAngle="{Binding ProgressAngle}" IsLargeArc="{Binding ProgressLarge}" />
+                                                                <LineSegment Point="50,50"></LineSegment>
+                                                            </PathSegmentCollection>
+                                                        </PathFigure.Segments>
+                                                    </PathFigure>
+                                                </PathFigureCollection>
+                                            </PathGeometry.Figures>
+                                        </PathGeometry>
+                                    </Path.Data>
+                                </Path>
 
-                            <TextBlock Grid.Row="2" HorizontalAlignment="Center" ClipToBounds="True" Margin="0,8,0,0"
-                                       Foreground="White" TextWrapping="WrapWithOverflow" TextTrimming="WordEllipsis"  Text="{Binding Path=Title}" />
+                                <Label Grid.Row="1" HorizontalContentAlignment="Center" Content="{Binding PhaseTitle}" Margin="0,8,0,0"
+                                       Foreground="White" />
 
+                                <TextBlock Grid.Row="2" HorizontalAlignment="Center" ClipToBounds="True" Margin="0,8,0,0"
+                                           Foreground="White" TextWrapping="WrapWithOverflow" TextTrimming="WordEllipsis"  Text="{Binding Path=Title}" />
+
+                            </Grid>
+                            <Grid Visibility="{TemplateBinding IsMouseOver, Converter={StaticResource BoolToVis}}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="1*" />
+                                    <RowDefinition Height="1*" />
+                                </Grid.RowDefinitions>
+                                <Button Content="Launch Now" />
+                                <Button Content="Cancel This" Grid.Row="1" />
+                            </Grid>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
