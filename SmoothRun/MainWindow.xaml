@@ -138,8 +138,8 @@
                                     <RowDefinition Height="1*" />
                                     <RowDefinition Height="1*" />
                                 </Grid.RowDefinitions>
-                                <Button Content="Launch Now" />
-                                <Button Content="Cancel This" Grid.Row="1" />
+                                <Button Content="Launch Now" Background="Transparent" BorderBrush="Transparent" Click="Launch_Click"/>
+                                <Button Content="Cancel This" Background="Transparent" BorderBrush="Transparent" Click="CancelLaunch_Click" Grid.Row="1" />
                             </Grid>
                         </Grid>
                     </DataTemplate>

@@ -222,11 +222,10 @@ namespace SmoothRun
                     {
                         app.Phase = LaunchPhase.Idle;
                     }
+                    previous = app.Phase;
                 }
 
                 app.Pulse();
-
-                previous = app.Phase;
                 first = false;
             }
 
@@ -292,6 +291,24 @@ namespace SmoothRun
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void Launch_Click(object sender, RoutedEventArgs e)
+        {
+            AppEntry app = (sender as Control)?.DataContext as AppEntry;
+            if (app != null)
+            {
+                StartLaunching(app);
+            }
+        }
+
+        private void CancelLaunch_Click(object sender, RoutedEventArgs e)
+        {
+            AppEntry app = (sender as Control)?.DataContext as AppEntry;
+            if (app != null)
+            {
+                app.Phase = LaunchPhase.Done;
+            }
         }
     }
 }
