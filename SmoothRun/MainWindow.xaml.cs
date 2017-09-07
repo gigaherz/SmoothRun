@@ -1,10 +1,13 @@
 ﻿using SmoothRun.Annotations;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -109,39 +112,38 @@ namespace SmoothRun
             {
                 if (_appList == null)
                 {
-                    _appList = new ObservableCollection<AppEntry>();
-
-                    var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
-                    var smoothStartup = Path.Combine(startMenu, "Smooth Startup");
-                    var startMenuCommon = Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms);
-                    var smoothStartupCommon = Path.Combine(startMenuCommon, "Smooth Startup");
-
-                    mConfig.LoadFrom(new[] { Path.Combine(smoothStartup, ".smoothconfig"), Path.Combine(smoothStartupCommon, ".smoothconfig") });
-
-                    if (Directory.Exists(smoothStartup))
+                    var lst = new ObservableCollection<AppEntry>();
+                    if (Interlocked.CompareExchange(ref _appList, lst, null) == null)
                     {
-                        foreach (var entry in Directory.EnumerateFiles(smoothStartup, "*.lnk"))
-                        {
-                            _appList.Add(new AppEntry
-                            {
-                                Title = Path.GetFileNameWithoutExtension(entry),
-                                FullPath = entry,
-                                Timeout = mConfig.Timeout
-                            });
-                        }
-                    }
+                        var startMenu = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+                        var smoothStartup = Path.Combine(startMenu, "Smooth Startup");
+                        var startMenuCommon = Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms);
+                        var smoothStartupCommon = Path.Combine(startMenuCommon, "Smooth Startup");
 
-                    if (Directory.Exists(smoothStartupCommon))
-                    {
-                        foreach (var entry in Directory.EnumerateFiles(smoothStartupCommon, "*.lnk"))
+                        mConfig.LoadFrom(new[] { Path.Combine(smoothStartup, ".smoothconfig"), Path.Combine(smoothStartupCommon, ".smoothconfig") });
+
+                        var tmp = new List<AppEntry>();
+                        var extensions = new[] { ".lnk", ".url" };
+                        foreach (string dir in new[] { smoothStartup, smoothStartupCommon })
                         {
-                            _appList.Add(new AppEntry
+                            if (Directory.Exists(dir))
                             {
-                                Title = Path.GetFileNameWithoutExtension(entry),
-                                FullPath = entry,
-                                Timeout = mConfig.Timeout
-                            });
+                                foreach (var fullfile in Directory.EnumerateFiles(dir))
+                                {
+                                    if (extensions.Contains(Path.GetExtension(fullfile).ToLower()))
+                                    {
+                                        tmp.Add(new AppEntry
+                                        {
+                                            Title = Path.GetFileNameWithoutExtension(fullfile),
+                                            FullPath = fullfile,
+                                            Timeout = mConfig.Timeout
+                                        });
+                                    }
+                                }
+                            }
                         }
+                        foreach(var entry in tmp.OrderBy(p => p.Title))
+                            _appList.Add(entry);
                     }
                 }
                 return _appList;
