@@ -150,6 +150,13 @@ namespace SmoothRun
             }
         }
 
+
+        protected override HitTestResult HitTestCore(PointHitTestParameters hitTestParameters)
+        {
+            Console.WriteLine(hitTestParameters.HitPoint);
+            return base.HitTestCore(hitTestParameters);
+        }
+
         DispatcherTimer timer;
         public MainWindow()
         {

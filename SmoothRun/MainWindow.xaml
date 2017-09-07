@@ -60,7 +60,7 @@
                     </Style.Triggers>
                 </Style>
             </ScrollViewer.Style>
-            <ItemsControl ItemsSource="{Binding AppList}" HorizontalAlignment="Center">
+            <ItemsControl ItemsSource="{Binding AppList}" HorizontalAlignment="Center" Background="#04000000">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal"/>
@@ -91,7 +91,7 @@
                             </DataTrigger>
                         </DataTemplate.Triggers>
 
-                        <Grid Margin="12" Width="128" Visibility="{Binding Visibility}" Background="Transparent">
+                        <Grid Margin="12" Width="128" Visibility="{Binding Visibility}" IsHitTestVisible="True">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -138,8 +138,30 @@
                                     <RowDefinition Height="1*" />
                                     <RowDefinition Height="1*" />
                                 </Grid.RowDefinitions>
-                                <Button Content="Launch Now" Background="Transparent" BorderBrush="Transparent" Click="Launch_Click"/>
-                                <Button Content="Cancel This" Background="Transparent" BorderBrush="Transparent" Click="CancelLaunch_Click" Grid.Row="1" />
+                                <Button Content="Launch Now" Background="Transparent" BorderBrush="Transparent" Click="Launch_Click">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Foreground" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="Black"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button Content="Cancel This" Background="Transparent" BorderBrush="Transparent" Click="CancelLaunch_Click" Grid.Row="1" >
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Foreground" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="Black"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
                         </Grid>
                     </DataTemplate>
