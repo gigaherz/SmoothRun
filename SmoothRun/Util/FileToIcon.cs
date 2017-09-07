@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -12,13 +11,20 @@ namespace SmoothRun.Util
     [ValueConversion(typeof(string), typeof(ImageSource))]
     public class FileToIconConverter : IValueConverter
     {
-        #region IMultiValueConverter Members
+#region IMultiValueConverter Members
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            using (Icon ico = Icon.FromHandle(ExtractFileIcon.ReadIcon(value as string ?? "")))
+            int size;
+            if (!int.TryParse(parameter as string ?? "", out size))
+                size = 128;
+            IntPtr hBitmap = WindowsThumbnailProvider.GetHBitmap(value as string ?? "", size, size, ThumbnailOptions.None);
+            try
             {
-                return Imaging.CreateBitmapSourceFromHIcon(
-                    ico.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                return Imaging.CreateBitmapSourceFromHBitmap(hBitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally
+            {
+                WindowsThumbnailProvider.DeleteObject(hBitmap);
             }
         }
 
@@ -27,7 +33,7 @@ namespace SmoothRun.Util
             throw new NotImplementedException();
         }
 
-        #endregion
+#endregion
 
     }
 }
